@@ -1,0 +1,81 @@
+pipeline{
+agent any
+tools {
+  maven 'maven3.9.6'
+}
+triggers {
+  pollSCM '* * * * *'
+}
+options {
+  timestamps()
+}
+parameters {
+  choice choices: ['master', 'Devlopment', 'stage', 'uat'], description: 'select the branch', name: 'BranchName'
+  string defaultValue: 'Devops tech', description: 'change the default value', name: 'personName'
+}
+
+stages{
+stage('chechout'){
+steps{
+git branch: "${params.BranchName}", credentialsId: '05aae08b-0aba-4634-a563-b0099b01fabe', url: 'https://github.com/Devops414/maven-repo.git'
+sh "echo ${params.personName}"
+    
+}
+}
+stage('Build'){
+steps{
+sh "mvn clean package"
+}
+}
+stage('sonar report'){
+steps{
+sh "mvn clean sonar:sonar package"
+}
+}
+stage('uploading into nexus'){
+steps{
+sh "mvn clean deploy"    
+}    
+}
+stage('deploy into tomcat'){
+steps{
+sshagent(['dc4d5de9-16d4-4ad3-b1b7-67e2984e9c14']){
+sh"scp -o StrictHostKeyChecking=no target/maven-web-apps.war ec2-user@172.31.38.24:/opt/apache-tomcat-8.5.97/webapps/"    
+}    
+}
+}
+}//node closing
+post {
+  success {
+    SendSlackNotifications(currentBuild.result)
+  }
+  failure {
+    SendSlackNotifications(currentBuild.result)
+  }
+}
+}//pipline closing
+def SendSlackNotifications(String buildStatus = 'STARTED') {
+  // build status of null means successful
+  buildStatus =  buildStatus ?: 'SUCCESS'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    color = 'YELLOW'
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESS') {
+    color = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    color = 'RED'
+    colorCode = '#FF0000'
+  }
+
+  // Send notifications
+  slackSend (color: colorCode, message: summary, channel: "icicibank")
+}
