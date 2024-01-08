@@ -97,13 +97,13 @@
 	    <repository>
 	      <id>nexus</id>
 	      <name>Devops Releases Nexus Repository</name>
-	      <url>http://15.206.157.245:8081/repository/icicibank-release/</url>
+	      <url>http://3.109.47.103:8081/repository/hdfc-release/</url>
 	    </repository>
 	    
 	    <snapshotRepository>
 	      <id>nexus</id>
 	      <name>Devops Snapshot Nexus Repository </name>
-	      <url>http://15.206.157.245:8081/repository/icicibank-snapshot/</url>
+	      <url>http://3.109.47.103:8081/repository/hdfc-snapshot/</url>
 	    </snapshotRepository>
 	    
 	</distributionManagement>
